@@ -1,0 +1,24 @@
+-- MODULESCRIPT: PartMultipliers
+-- Original Path: game.BAC - 30366.Classes.Ragdoll.Configuration.PartMultipliers
+-- Decompiled script extracted from game dump
+
+-- Decompiled with Velocity Script Decompiler
+local v1 = {
+    ["Head"] = {
+        ["Minimum"] = 55,
+        ["Maximum"] = 65
+    },
+    ["HumanoidRootPart"] = {
+        ["Minimum"] = 35,
+        ["Maximum"] = 50
+    },
+    ["UpperTorso"] = {
+        ["Minimum"] = 35,
+        ["Maximum"] = 50
+    },
+    ["LowerTorso"] = {
+        ["Minimum"] = 35,
+        ["Maximum"] = 50
+    }
+}
+return table.freeze(v1)
