@@ -22,6 +22,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LOCAL_PLAYER = Players.LocalPlayer
 local CAMERA = Workspace.CurrentCamera
+local CharactersFolder = Workspace:WaitForChild("Characters", 10)
 
 local CONFIG = {
     MaxAutowallDistance = 240,
@@ -521,6 +522,8 @@ end
 local ui = buildUi()
 local blips: {[Player]: Frame} = {}
 local lastTriggerFire = 0
+local TriggerBotEnabled = true
+local TriggerBotDelay = 0 -- milliseconds
 
 local function getOrCreateBlip(player: Player): Frame
     local existing = blips[player]
@@ -592,7 +595,76 @@ UserInputService.InputBegan:Connect(function(input, processed)
 end)
 
 local function tryTriggerbot(traceResult)
+    local function getTFolder()
+        return CharactersFolder and CharactersFolder:FindFirstChild("Terrorists")
+    end
+
+    local function getCTFolder()
+        return CharactersFolder and CharactersFolder:FindFirstChild("Counter-Terrorists")
+    end
+
+    local function isAlive()
+        local t = getTFolder()
+        local ct = getCTFolder()
+        return (t and t:FindFirstChild(LOCAL_PLAYER.Name)) or (ct and ct:FindFirstChild(LOCAL_PLAYER.Name))
+    end
+
+    local function getEnemyFolder()
+        if not isAlive() then
+            return nil
+        end
+        local t = getTFolder()
+        local ct = getCTFolder()
+        if t and t:FindFirstChild(LOCAL_PLAYER.Name) then
+            return ct
+        end
+        if ct and ct:FindFirstChild(LOCAL_PLAYER.Name) then
+            return t
+        end
+        return nil
+    end
+
+    local function crosshairOnEnemy(): boolean
+        local viewportSize = CAMERA.ViewportSize
+        local ray = CAMERA:ViewportPointToRay(viewportSize.X / 2, viewportSize.Y / 2)
+        local raycastParams = RaycastParams.new()
+        raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+
+        local ignoreList = { CAMERA }
+        if LOCAL_PLAYER.Character then
+            table.insert(ignoreList, LOCAL_PLAYER.Character)
+        end
+        raycastParams.FilterDescendantsInstances = ignoreList
+
+        local result = Workspace:Raycast(ray.Origin, ray.Direction * 1000, raycastParams)
+        if not result or not result.Instance then
+            return false
+        end
+
+        local model = result.Instance:FindFirstAncestorOfClass("Model")
+        if not model or not model:FindFirstChildOfClass("Humanoid") then
+            return false
+        end
+
+        local enemyFolder = getEnemyFolder()
+        if not enemyFolder or model.Parent ~= enemyFolder then
+            return false
+        end
+
+        local hum = model:FindFirstChildOfClass("Humanoid")
+        return hum ~= nil and hum.Health > 0
+    end
+
+    if not TriggerBotEnabled then
+        return
+    end
     if not uiState.TriggerEnabled then
+        return
+    end
+    if not isAlive() then
+        return
+    end
+    if not crosshairOnEnemy() then
         return
     end
     if not traceResult.ready then
@@ -637,6 +709,10 @@ local function tryTriggerbot(traceResult)
         if not ok or not active then
             return
         end
+    end
+
+    if TriggerBotDelay > 0 then
+        task.wait(TriggerBotDelay / 1000)
     end
 
     if typeof(mouse1ClickFn) == "function" then
