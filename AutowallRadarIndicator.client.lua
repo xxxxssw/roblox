@@ -573,19 +573,34 @@ local blips: {[Player]: Frame} = {}
 local lastTriggerFire = 0
 local TriggerBotEnabled = true
 local TriggerBotDelay = 0 -- milliseconds
-local espHighlights: {[Player]: Highlight} = {}
-local espNameTags: {[Player]: BillboardGui} = {}
+local espDrawings: {[Player]: {[string]: any}} = {}
+local drawingGlobal = nil
+do
+    local env = _G
+    if typeof(getgenv) == "function" then
+        local ok, customEnv = pcall(getgenv)
+        if ok and type(customEnv) == "table" then
+            env = customEnv
+        end
+    end
+    drawingGlobal = env["Drawing"]
+end
+local drawingApiAvailable = type(drawingGlobal) == "table" and typeof(drawingGlobal.new) == "function"
 
 local function removeEsp(player: Player)
-    local hl = espHighlights[player]
-    if hl then
-        hl:Destroy()
-        espHighlights[player] = nil
-    end
-    local tag = espNameTags[player]
-    if tag then
-        tag:Destroy()
-        espNameTags[player] = nil
+    local draw = espDrawings[player]
+    if draw then
+        if draw.Box then
+            pcall(function()
+                draw.Box:Remove()
+            end)
+        end
+        if draw.Name then
+            pcall(function()
+                draw.Name:Remove()
+            end)
+        end
+        espDrawings[player] = nil
     end
 end
 
@@ -600,60 +615,57 @@ local function updateEspForPlayer(player: Player)
     local hum = getHumanoid(player)
     local isValidEnemy = character and root and hum and hum.Health > 0 and isEnemy(player)
 
-    if not uiState.EspEnabled or not isValidEnemy then
+    if not drawingApiAvailable or not uiState.EspEnabled or not isValidEnemy then
         removeEsp(player)
         return
     end
 
-    local highlight = espHighlights[player]
-    if not highlight then
-        highlight = Instance.new("Highlight")
-        highlight.Name = "AWallESP"
-        highlight.FillTransparency = 0.55
-        highlight.OutlineTransparency = 0.1
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        highlight.Parent = ui.Gui
-        espHighlights[player] = highlight
+    local draw = espDrawings[player]
+    if not draw then
+        local box = drawingGlobal.new("Square")
+        box.Filled = false
+        box.Thickness = 1.5
+        box.Color = Color3.fromRGB(255, 95, 95)
+        box.Visible = false
+
+        local name = drawingGlobal.new("Text")
+        name.Center = true
+        name.Outline = true
+        name.Size = 13
+        name.Color = Color3.fromRGB(255, 160, 160)
+        name.Visible = false
+
+        draw = {
+            Box = box,
+            Name = name
+        }
+        espDrawings[player] = draw
     end
-    highlight.Adornee = character
-    highlight.FillColor = Color3.fromRGB(255, 90, 90)
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
 
-    if uiState.EspShowNames then
-        local nameTag = espNameTags[player]
-        if not nameTag then
-            nameTag = Instance.new("BillboardGui")
-            nameTag.Name = "AWallNameESP"
-            nameTag.Size = UDim2.fromOffset(160, 26)
-            nameTag.StudsOffset = Vector3.new(0, 2.8, 0)
-            nameTag.AlwaysOnTop = true
-            nameTag.Parent = ui.Gui
-
-            local label = Instance.new("TextLabel")
-            label.Name = "Label"
-            label.Size = UDim2.fromScale(1, 1)
-            label.BackgroundTransparency = 1
-            label.Font = Enum.Font.GothamBold
-            label.TextSize = 13
-            label.TextColor3 = Color3.fromRGB(255, 160, 160)
-            label.TextStrokeTransparency = 0.3
-            label.Parent = nameTag
-
-            espNameTags[player] = nameTag
-        end
-
-        nameTag.Adornee = root
-        local label = nameTag:FindFirstChild("Label")
-        if label and label:IsA("TextLabel") then
-            label.Text = string.format("%s [%d]", player.DisplayName, math.floor(hum.Health + 0.5))
-        end
-    else
-        local existing = espNameTags[player]
-        if existing then
-            existing:Destroy()
-            espNameTags[player] = nil
-        end
+    local head = character:FindFirstChild("Head")
+    if not head or not head:IsA("BasePart") then
+        draw.Box.Visible = false
+        draw.Name.Visible = false
+        return
     end
+
+    local rootPos, rootOnScreen = CAMERA:WorldToViewportPoint(root.Position)
+    local headPos, headOnScreen = CAMERA:WorldToViewportPoint(head.Position + Vector3.new(0, 0.4, 0))
+    if not rootOnScreen or not headOnScreen then
+        draw.Box.Visible = false
+        draw.Name.Visible = false
+        return
+    end
+
+    local h = math.max(24, math.abs(rootPos.Y - headPos.Y) * 2.2)
+    local w = h * 0.62
+    draw.Box.Size = Vector2.new(w, h)
+    draw.Box.Position = Vector2.new(rootPos.X - w * 0.5, rootPos.Y - h * 0.5)
+    draw.Box.Visible = true
+
+    draw.Name.Text = string.format("%s [%d]", player.DisplayName, math.floor(hum.Health + 0.5))
+    draw.Name.Position = Vector2.new(rootPos.X, rootPos.Y - h * 0.65)
+    draw.Name.Visible = uiState.EspShowNames
 end
 
 local function getOrCreateBlip(player: Player): Frame
