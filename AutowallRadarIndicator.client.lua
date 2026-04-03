@@ -33,6 +33,7 @@ local CONFIG = {
     RadarSize = Vector2.new(190, 190),
     RadarPosition = UDim2.fromOffset(24, 24),
     RadarHotkey = Enum.KeyCode.RightBracket,
+    MenuHotkey = Enum.KeyCode.Insert,
     ShowTeammates = true,
     ShowHealthText = true,
     UseTeamColor = true,
@@ -71,6 +72,8 @@ local uiState = {
     TriggerEnabled = CONFIG.TriggerEnabledByDefault,
     MinDamage = CONFIG.DefaultMinDamage,
     HitChance = CONFIG.DefaultHitChance,
+    EspEnabled = true,
+    EspShowNames = true,
 }
 
 local function clamp(n: number, minN: number, maxN: number): number
@@ -444,12 +447,16 @@ local function buildUi()
 
     local triggerPanel = Instance.new("Frame")
     triggerPanel.Name = "TriggerPanel"
-    triggerPanel.Size = UDim2.fromOffset(260, 118)
-    triggerPanel.Position = UDim2.new(0, 24, 1, -142)
+    triggerPanel.Size = UDim2.fromOffset(290, 180)
+    triggerPanel.Position = UDim2.new(0, 24, 1, -204)
     triggerPanel.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-    triggerPanel.BackgroundTransparency = 0.2
+    triggerPanel.BackgroundTransparency = 0.15
     triggerPanel.BorderSizePixel = 0
     triggerPanel.Parent = gui
+
+    local triggerCorner = Instance.new("UICorner")
+    triggerCorner.CornerRadius = UDim.new(0, 8)
+    triggerCorner.Parent = triggerPanel
 
     local panelStroke = Instance.new("UIStroke")
     panelStroke.Thickness = 2
@@ -459,7 +466,7 @@ local function buildUi()
     local title = Instance.new("TextLabel")
     title.BackgroundTransparency = 1
     title.Position = UDim2.fromOffset(8, 6)
-    title.Size = UDim2.fromOffset(180, 20)
+    title.Size = UDim2.fromOffset(200, 20)
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Font = Enum.Font.GothamBold
     title.TextSize = 13
@@ -469,17 +476,35 @@ local function buildUi()
 
     local triggerToggle = Instance.new("TextButton")
     triggerToggle.Size = UDim2.fromOffset(76, 22)
-    triggerToggle.Position = UDim2.fromOffset(174, 5)
+    triggerToggle.Position = UDim2.fromOffset(208, 5)
     triggerToggle.BackgroundColor3 = Color3.fromRGB(90, 35, 120)
     triggerToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
     triggerToggle.Font = Enum.Font.GothamBold
     triggerToggle.TextSize = 12
     triggerToggle.Parent = triggerPanel
 
+    local espToggle = Instance.new("TextButton")
+    espToggle.Size = UDim2.fromOffset(76, 22)
+    espToggle.Position = UDim2.fromOffset(208, 32)
+    espToggle.BackgroundColor3 = Color3.fromRGB(35, 90, 120)
+    espToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    espToggle.Font = Enum.Font.GothamBold
+    espToggle.TextSize = 12
+    espToggle.Parent = triggerPanel
+
+    local espNameToggle = Instance.new("TextButton")
+    espNameToggle.Size = UDim2.fromOffset(76, 22)
+    espNameToggle.Position = UDim2.fromOffset(208, 59)
+    espNameToggle.BackgroundColor3 = Color3.fromRGB(35, 120, 90)
+    espNameToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    espNameToggle.Font = Enum.Font.GothamBold
+    espNameToggle.TextSize = 12
+    espNameToggle.Parent = triggerPanel
+
     local minDamageLabel = Instance.new("TextLabel")
     minDamageLabel.BackgroundTransparency = 1
-    minDamageLabel.Position = UDim2.fromOffset(10, 40)
-    minDamageLabel.Size = UDim2.fromOffset(240, 18)
+    minDamageLabel.Position = UDim2.fromOffset(10, 94)
+    minDamageLabel.Size = UDim2.fromOffset(275, 18)
     minDamageLabel.TextXAlignment = Enum.TextXAlignment.Left
     minDamageLabel.Font = Enum.Font.Gotham
     minDamageLabel.TextSize = 12
@@ -488,22 +513,45 @@ local function buildUi()
 
     local hitChanceLabel = Instance.new("TextLabel")
     hitChanceLabel.BackgroundTransparency = 1
-    hitChanceLabel.Position = UDim2.fromOffset(10, 76)
-    hitChanceLabel.Size = UDim2.fromOffset(240, 18)
+    hitChanceLabel.Position = UDim2.fromOffset(10, 122)
+    hitChanceLabel.Size = UDim2.fromOffset(275, 18)
     hitChanceLabel.TextXAlignment = Enum.TextXAlignment.Left
     hitChanceLabel.Font = Enum.Font.Gotham
     hitChanceLabel.TextSize = 12
     hitChanceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     hitChanceLabel.Parent = triggerPanel
 
+    local menuHint = Instance.new("TextLabel")
+    menuHint.BackgroundTransparency = 1
+    menuHint.Position = UDim2.fromOffset(10, 148)
+    menuHint.Size = UDim2.fromOffset(275, 22)
+    menuHint.TextXAlignment = Enum.TextXAlignment.Left
+    menuHint.Font = Enum.Font.Gotham
+    menuHint.TextSize = 11
+    menuHint.TextColor3 = Color3.fromRGB(190, 190, 190)
+    menuHint.Text = "Insert = Toggle Menu | Arrow keys = MinDamage/HitChance"
+    menuHint.Parent = triggerPanel
+
     local function updatePanelText()
         triggerToggle.Text = uiState.TriggerEnabled and "ON" or "OFF"
+        espToggle.Text = uiState.EspEnabled and "ESP ON" or "ESP OFF"
+        espNameToggle.Text = uiState.EspShowNames and "NAMES ON" or "NAMES OFF"
         minDamageLabel.Text = string.format("Min Damage: %d  (Left/Right)", uiState.MinDamage)
         hitChanceLabel.Text = string.format("Hit Chance: %d%% (Down/Up)", uiState.HitChance)
     end
 
     triggerToggle.MouseButton1Click:Connect(function()
         uiState.TriggerEnabled = not uiState.TriggerEnabled
+        updatePanelText()
+    end)
+
+    espToggle.MouseButton1Click:Connect(function()
+        uiState.EspEnabled = not uiState.EspEnabled
+        updatePanelText()
+    end)
+
+    espNameToggle.MouseButton1Click:Connect(function()
+        uiState.EspShowNames = not uiState.EspShowNames
         updatePanelText()
     end)
 
@@ -515,6 +563,7 @@ local function buildUi()
         IndicatorStroke = indicatorStroke,
         RadarRoot = radarRoot,
         RadarBlips = radarBlips,
+        TriggerPanel = triggerPanel,
         UpdatePanelText = updatePanelText,
     }
 end
@@ -524,6 +573,88 @@ local blips: {[Player]: Frame} = {}
 local lastTriggerFire = 0
 local TriggerBotEnabled = true
 local TriggerBotDelay = 0 -- milliseconds
+local espHighlights: {[Player]: Highlight} = {}
+local espNameTags: {[Player]: BillboardGui} = {}
+
+local function removeEsp(player: Player)
+    local hl = espHighlights[player]
+    if hl then
+        hl:Destroy()
+        espHighlights[player] = nil
+    end
+    local tag = espNameTags[player]
+    if tag then
+        tag:Destroy()
+        espNameTags[player] = nil
+    end
+end
+
+local function updateEspForPlayer(player: Player)
+    if player == LOCAL_PLAYER then
+        removeEsp(player)
+        return
+    end
+
+    local character = player.Character
+    local root = getCharacterRoot(player)
+    local hum = getHumanoid(player)
+    local isValidEnemy = character and root and hum and hum.Health > 0 and isEnemy(player)
+
+    if not uiState.EspEnabled or not isValidEnemy then
+        removeEsp(player)
+        return
+    end
+
+    local highlight = espHighlights[player]
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.Name = "AWallESP"
+        highlight.FillTransparency = 0.55
+        highlight.OutlineTransparency = 0.1
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = ui.Gui
+        espHighlights[player] = highlight
+    end
+    highlight.Adornee = character
+    highlight.FillColor = Color3.fromRGB(255, 90, 90)
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+
+    if uiState.EspShowNames then
+        local nameTag = espNameTags[player]
+        if not nameTag then
+            nameTag = Instance.new("BillboardGui")
+            nameTag.Name = "AWallNameESP"
+            nameTag.Size = UDim2.fromOffset(160, 26)
+            nameTag.StudsOffset = Vector3.new(0, 2.8, 0)
+            nameTag.AlwaysOnTop = true
+            nameTag.Parent = ui.Gui
+
+            local label = Instance.new("TextLabel")
+            label.Name = "Label"
+            label.Size = UDim2.fromScale(1, 1)
+            label.BackgroundTransparency = 1
+            label.Font = Enum.Font.GothamBold
+            label.TextSize = 13
+            label.TextColor3 = Color3.fromRGB(255, 160, 160)
+            label.TextStrokeTransparency = 0.3
+            label.Parent = nameTag
+
+            espNameTags[player] = nameTag
+        end
+
+        nameTag.Adornee = root
+        local label = nameTag:FindFirstChild("Label")
+        if label and label:IsA("TextLabel") then
+            label.Text = string.format("%s [%d]", player.DisplayName, math.floor(hum.Health + 0.5))
+        end
+    else
+        local existing = espNameTags[player]
+        if existing then
+            existing:Destroy()
+            espNameTags[player] = nil
+        end
+    end
+end
 
 local function getOrCreateBlip(player: Player): Frame
     local existing = blips[player]
@@ -567,7 +698,10 @@ local function removeBlip(player: Player)
     end
 end
 
-Players.PlayerRemoving:Connect(removeBlip)
+Players.PlayerRemoving:Connect(function(player)
+    removeBlip(player)
+    removeEsp(player)
+end)
 
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then
@@ -576,6 +710,10 @@ UserInputService.InputBegan:Connect(function(input, processed)
 
     if input.KeyCode == CONFIG.RadarHotkey then
         ui.RadarRoot.Visible = not ui.RadarRoot.Visible
+        return
+    end
+    if input.KeyCode == CONFIG.MenuHotkey then
+        ui.TriggerPanel.Visible = not ui.TriggerPanel.Visible
         return
     end
 
@@ -733,6 +871,7 @@ RunService.RenderStepped:Connect(function()
 
         for player in pairs(blips) do
             removeBlip(player)
+            removeEsp(player)
         end
         return
     end
@@ -755,6 +894,7 @@ RunService.RenderStepped:Connect(function()
     local yaw = math.atan2(localLook.X, localLook.Z)
 
     for _, player in ipairs(Players:GetPlayers()) do
+        updateEspForPlayer(player)
         if player ~= LOCAL_PLAYER then
             local root = getCharacterRoot(player)
             local hum = getHumanoid(player)
