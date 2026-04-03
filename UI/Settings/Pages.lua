@@ -9,7 +9,7 @@ local v_u_3 = require(v2.Components.Common.GetUserPlatform)
 v_u_1.Descriptions = {
     ["Video"] = "Configure visual quality, performance settings, and display options to optimize your gaming experience. Adjust frame rate limits, graphics quality, and rendering settings to balance visual fidelity with smooth performance. Fine-tune these settings based on your hardware capabilities to achieve the best possible gameplay experience.",
     ["Audio"] = "Adjust volume levels for game sounds, music, and voice chat to create your ideal audio environment. Fine-tune your audio experience for optimal situational awareness during gameplay, ensuring you can hear enemy footsteps, gunfire, and other critical sound cues. Customize audio output settings to match your headphones or speaker setup for the best immersive experience.",
-    ["Game"] = "Customize your HUD, crosshair, radar, and other gameplay elements to match your playstyle and preferences. Modify interface transparency, element positioning, and visual indicators to create a clean and efficient gaming environment. Tailor these settings to reduce visual clutter and improve your reaction time during intense combat situations.",
+    ["Game"] = "Customize your HUD, crosshair, radar, autowall indicators, and other gameplay elements to match your playstyle and preferences. Modify interface transparency, element positioning, and visual indicators to create a clean and efficient gaming environment. Tailor these settings to reduce visual clutter and improve your reaction time during intense combat situations.",
     ["Keybinds"] = "Rebind keyboard, mouse, and controller inputs to your preferred layout for maximum comfort and efficiency. Customize movement controls, weapon selection, utility bindings, and action keys to match your muscle memory and playstyle. Create a personalized control scheme that allows for quick reactions and smooth execution of complex maneuvers during gameplay."
 }
 local v4 = {
@@ -582,6 +582,109 @@ local v6 = {
         ["Category"] = "HUD",
         ["Description"] = "Enable In-Game Hints (Instructor Messages)",
         ["Order"] = 14
+    },
+    ["_Divider_HUD_8"] = {
+        ["Type"] = "Divider",
+        ["Template"] = "Divider",
+        ["Default"] = nil,
+        ["Category"] = "HUD",
+        ["Order"] = 15
+    },
+    ["AWall Indicator"] = {
+        ["Type"] = "Toggle",
+        ["Template"] = "ToggleTemplate",
+        ["Default"] = true,
+        ["Category"] = "HUD",
+        ["Description"] = "Display an autowall readiness indicator that shows when your crosshair is over a wallbangable surface",
+        ["DisplayName"] = "Autowall Indicator",
+        ["Order"] = 16
+    },
+    ["_Divider_HUD_9"] = {
+        ["Type"] = "Divider",
+        ["Template"] = "Divider",
+        ["Default"] = nil,
+        ["Category"] = "HUD",
+        ["Order"] = 17
+    },
+    ["AWall Indicator Style"] = {
+        ["Type"] = "Dropdown",
+        ["Template"] = "DropdownTemplate",
+        ["Default"] = "Compact",
+        ["Enums"] = { "Minimal", "Compact", "Detailed" },
+        ["Category"] = "HUD",
+        ["Description"] = "Choose how much autowall information is shown near your crosshair",
+        ["DisplayName"] = "Autowall Style",
+        ["Order"] = 18
+    },
+    ["_Divider_HUD_10"] = {
+        ["Type"] = "Divider",
+        ["Template"] = "Divider",
+        ["Default"] = nil,
+        ["Category"] = "HUD",
+        ["Order"] = 19
+    },
+    ["AWall Opacity"] = {
+        ["Type"] = "Slider",
+        ["Template"] = "SliderTemplate",
+        ["Default"] = 85,
+        ["Min"] = 10,
+        ["Max"] = 100,
+        ["Step"] = 1,
+        ["Category"] = "HUD",
+        ["Description"] = "Opacity of the autowall indicator while active",
+        ["DisplayName"] = "Autowall Opacity",
+        ["Order"] = 20
+    },
+    ["_Divider_HUD_11"] = {
+        ["Type"] = "Divider",
+        ["Template"] = "Divider",
+        ["Default"] = nil,
+        ["Category"] = "HUD",
+        ["Order"] = 21
+    },
+    ["AWall Minimum Damage"] = {
+        ["Type"] = "Slider",
+        ["Template"] = "SliderTemplate",
+        ["Default"] = 25,
+        ["Min"] = 0,
+        ["Max"] = 100,
+        ["Step"] = 1,
+        ["Category"] = "HUD",
+        ["Description"] = "Only highlight autowall shots that meet or exceed this predicted damage",
+        ["DisplayName"] = "Autowall Min Damage",
+        ["Order"] = 22
+    },
+    ["_Divider_HUD_12"] = {
+        ["Type"] = "Divider",
+        ["Template"] = "Divider",
+        ["Default"] = nil,
+        ["Category"] = "HUD",
+        ["Order"] = 23
+    },
+    ["AWall Show Distance"] = {
+        ["Type"] = "Toggle",
+        ["Template"] = "ToggleTemplate",
+        ["Default"] = true,
+        ["Category"] = "HUD",
+        ["Description"] = "Show penetration distance in the autowall indicator for better wallbang confidence",
+        ["DisplayName"] = "Autowall Distance",
+        ["Order"] = 24
+    },
+    ["_Divider_HUD_13"] = {
+        ["Type"] = "Divider",
+        ["Template"] = "Divider",
+        ["Default"] = nil,
+        ["Category"] = "HUD",
+        ["Order"] = 25
+    },
+    ["AWall Pulse on Viable Shot"] = {
+        ["Type"] = "Toggle",
+        ["Template"] = "ToggleTemplate",
+        ["Default"] = true,
+        ["Category"] = "HUD",
+        ["Description"] = "Pulse the autowall indicator when a high-confidence wallbang is available",
+        ["DisplayName"] = "Autowall Pulse",
+        ["Order"] = 26
     },
     ["Crosshair Preview"] = {
         ["Type"] = "CrosshairPreview",
