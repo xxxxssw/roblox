@@ -19,7 +19,6 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LOCAL_PLAYER = Players.LocalPlayer
 local CAMERA = Workspace.CurrentCamera
@@ -613,15 +612,40 @@ local function tryTriggerbot(traceResult)
 
     lastTriggerFire = now
 
-    local viewport = CAMERA.ViewportSize
-    local mouseX = math.floor(viewport.X * 0.5)
-    local mouseY = math.floor(viewport.Y * 0.5)
+    -- Potassium input API:
+    -- https://potassium.gitbook.io/api/environment/input
+    local globalEnv = _G
+    if typeof(getgenv) == "function" then
+        local ok, env = pcall(getgenv)
+        if ok and type(env) == "table" then
+            globalEnv = env
+        end
+    end
 
-    -- Simulate an actual MouseButton1 click instead of calling Tool:Activate().
-    pcall(function()
-        VirtualInputManager:SendMouseButtonEvent(mouseX, mouseY, 0, true, game, 0)
-        VirtualInputManager:SendMouseButtonEvent(mouseX, mouseY, 0, false, game, 0)
-    end)
+    local isActiveFn = globalEnv["isrbxactive"]
+    local mouse1ClickFn = globalEnv["mouse1click"]
+    local mouse1PressFn = globalEnv["mouse1press"]
+    local mouse1ReleaseFn = globalEnv["mouse1release"]
+
+    local canUseInputApi = typeof(mouse1ClickFn) == "function" or (typeof(mouse1PressFn) == "function" and typeof(mouse1ReleaseFn) == "function")
+    if not canUseInputApi then
+        return
+    end
+
+    if typeof(isActiveFn) == "function" then
+        local ok, active = pcall(isActiveFn)
+        if not ok or not active then
+            return
+        end
+    end
+
+    if typeof(mouse1ClickFn) == "function" then
+        pcall(mouse1ClickFn)
+        return
+    end
+
+    pcall(mouse1PressFn)
+    pcall(mouse1ReleaseFn)
 end
 
 RunService.RenderStepped:Connect(function()
