@@ -74,6 +74,7 @@ local uiState = {
     HitChance = CONFIG.DefaultHitChance,
     EspEnabled = true,
     EspShowNames = true,
+    AimbotEnabled = true,
 }
 
 local function clamp(n: number, minN: number, maxN: number): number
@@ -447,8 +448,8 @@ local function buildUi()
 
     local triggerPanel = Instance.new("Frame")
     triggerPanel.Name = "TriggerPanel"
-    triggerPanel.Size = UDim2.fromOffset(290, 180)
-    triggerPanel.Position = UDim2.new(0, 24, 1, -204)
+    triggerPanel.Size = UDim2.fromOffset(290, 206)
+    triggerPanel.Position = UDim2.new(0, 24, 1, -230)
     triggerPanel.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
     triggerPanel.BackgroundTransparency = 0.15
     triggerPanel.BorderSizePixel = 0
@@ -501,9 +502,18 @@ local function buildUi()
     espNameToggle.TextSize = 12
     espNameToggle.Parent = triggerPanel
 
+    local aimbotToggle = Instance.new("TextButton")
+    aimbotToggle.Size = UDim2.fromOffset(76, 22)
+    aimbotToggle.Position = UDim2.fromOffset(208, 86)
+    aimbotToggle.BackgroundColor3 = Color3.fromRGB(120, 60, 35)
+    aimbotToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    aimbotToggle.Font = Enum.Font.GothamBold
+    aimbotToggle.TextSize = 12
+    aimbotToggle.Parent = triggerPanel
+
     local minDamageLabel = Instance.new("TextLabel")
     minDamageLabel.BackgroundTransparency = 1
-    minDamageLabel.Position = UDim2.fromOffset(10, 94)
+    minDamageLabel.Position = UDim2.fromOffset(10, 122)
     minDamageLabel.Size = UDim2.fromOffset(275, 18)
     minDamageLabel.TextXAlignment = Enum.TextXAlignment.Left
     minDamageLabel.Font = Enum.Font.Gotham
@@ -513,7 +523,7 @@ local function buildUi()
 
     local hitChanceLabel = Instance.new("TextLabel")
     hitChanceLabel.BackgroundTransparency = 1
-    hitChanceLabel.Position = UDim2.fromOffset(10, 122)
+    hitChanceLabel.Position = UDim2.fromOffset(10, 150)
     hitChanceLabel.Size = UDim2.fromOffset(275, 18)
     hitChanceLabel.TextXAlignment = Enum.TextXAlignment.Left
     hitChanceLabel.Font = Enum.Font.Gotham
@@ -523,7 +533,7 @@ local function buildUi()
 
     local menuHint = Instance.new("TextLabel")
     menuHint.BackgroundTransparency = 1
-    menuHint.Position = UDim2.fromOffset(10, 148)
+    menuHint.Position = UDim2.fromOffset(10, 176)
     menuHint.Size = UDim2.fromOffset(275, 22)
     menuHint.TextXAlignment = Enum.TextXAlignment.Left
     menuHint.Font = Enum.Font.Gotham
@@ -536,6 +546,7 @@ local function buildUi()
         triggerToggle.Text = uiState.TriggerEnabled and "ON" or "OFF"
         espToggle.Text = uiState.EspEnabled and "ESP ON" or "ESP OFF"
         espNameToggle.Text = uiState.EspShowNames and "NAMES ON" or "NAMES OFF"
+        aimbotToggle.Text = uiState.AimbotEnabled and "AIM ON" or "AIM OFF"
         minDamageLabel.Text = string.format("Min Damage: %d  (Left/Right)", uiState.MinDamage)
         hitChanceLabel.Text = string.format("Hit Chance: %d%% (Down/Up)", uiState.HitChance)
     end
@@ -552,6 +563,11 @@ local function buildUi()
 
     espNameToggle.MouseButton1Click:Connect(function()
         uiState.EspShowNames = not uiState.EspShowNames
+        updatePanelText()
+    end)
+
+    aimbotToggle.MouseButton1Click:Connect(function()
+        uiState.AimbotEnabled = not uiState.AimbotEnabled
         updatePanelText()
     end)
 
@@ -874,6 +890,58 @@ local function tryTriggerbot(traceResult)
     pcall(mouse1ReleaseFn)
 end
 
+local function tryAimbot(traceResult)
+    if not uiState.AimbotEnabled then
+        return
+    end
+    if not traceResult.ready then
+        return
+    end
+
+    local target = traceResult.targetPlayer
+    if not target then
+        return
+    end
+
+    local character = target.Character
+    if not character then
+        return
+    end
+    local head = character:FindFirstChild("Head")
+    if not head or not head:IsA("BasePart") then
+        return
+    end
+
+    local headPos, onScreen = CAMERA:WorldToViewportPoint(head.Position)
+    if not onScreen then
+        return
+    end
+
+    local env = _G
+    if typeof(getgenv) == "function" then
+        local ok, customEnv = pcall(getgenv)
+        if ok and type(customEnv) == "table" then
+            env = customEnv
+        end
+    end
+    local mouseMoveRelFn = env["mousemoverel"]
+    if typeof(mouseMoveRelFn) ~= "function" then
+        return
+    end
+
+    local viewport = CAMERA.ViewportSize
+    local centerX = viewport.X * 0.5
+    local centerY = viewport.Y * 0.5
+    local dx = headPos.X - centerX
+    local dy = headPos.Y - centerY
+
+    if math.abs(dx) < 1 and math.abs(dy) < 1 then
+        return
+    end
+
+    pcall(mouseMoveRelFn, dx, dy)
+end
+
 RunService.RenderStepped:Connect(function()
     local localRoot = getCharacterRoot(LOCAL_PLAYER)
     if not localRoot then
@@ -899,6 +967,7 @@ RunService.RenderStepped:Connect(function()
         ui.IndicatorStroke.Color = Color3.fromRGB(255, 60, 60)
     end
 
+    tryAimbot(trace)
     tryTriggerbot(trace)
 
     local localPos = localRoot.Position
