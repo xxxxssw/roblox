@@ -19,6 +19,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LOCAL_PLAYER = Players.LocalPlayer
 local CAMERA = Workspace.CurrentCamera
@@ -611,7 +612,16 @@ local function tryTriggerbot(traceResult)
     end
 
     lastTriggerFire = now
-    tool:Activate()
+
+    local viewport = CAMERA.ViewportSize
+    local mouseX = math.floor(viewport.X * 0.5)
+    local mouseY = math.floor(viewport.Y * 0.5)
+
+    -- Simulate an actual MouseButton1 click instead of calling Tool:Activate().
+    pcall(function()
+        VirtualInputManager:SendMouseButtonEvent(mouseX, mouseY, 0, true, game, 0)
+        VirtualInputManager:SendMouseButtonEvent(mouseX, mouseY, 0, false, game, 0)
+    end)
 end
 
 RunService.RenderStepped:Connect(function()
